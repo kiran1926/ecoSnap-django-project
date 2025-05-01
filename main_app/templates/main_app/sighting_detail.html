@@ -1,0 +1,43 @@
+{% extends 'main_app/base.html' %} {% block title %}{{ sighting.species_name }} - Sighting Details{% endblock %} {% block content %}
+<div class="bg-white border border-gray-200 rounded-xl p-6 md:p-8">
+    <a href="{% url 'main_app:map_view' %}" class="text-eco-green hover:text-eco-green-dark font-medium">
+            &larr; Back to Map
+        </a> {# Add edit/delete buttons if user is owner #} {% if user == sighting.user %}
+    <h1 class="text-3xl md:text-4xl font-bold text-eco-green mb-4">{{ sighting.species_name }}</h1>
+    <p class="text-sm text-eco-secondary-text mb-1">Sighted by: {{ sighting.user.username }} on {{ sighting.created_at|date:"F d, Y" }}</p>
+    <p class="text-sm text-eco-secondary-text mb-6">Location: ({{ sighting.latitude|floatformat:4 }}, {{ sighting.longitude|floatformat:4 }})</p>
+
+    {% if sighting.description %}
+    <div class="mb-6">
+        <h2 class="text-xl font-semibold text-eco-dark-text mb-2">Description</h2>
+        <p class="text-eco-secondary-text whitespace-pre-wrap">{{ sighting.description }}</p>
+    </div>
+    {% endif %} {% if sighting.image_urls %}
+    <div class="mb-6">
+        <h2 class="text-xl font-semibold text-eco-dark-text mb-2">Images</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {# Assuming image_urls is a TextField with one URL per line #} {% for image_url in sighting.image_urls.splitlines %} {% if image_url %}
+            <div>
+                <img src="{{ image_url }}" alt="Sighting image for {{ sighting.species_name }}" class="rounded-lg shadow-md w-full h-48 object-cover">
+            </div>
+            {% endif %} {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <p class="text-eco-secondary-text mb-4">
+        Is native: {% if sighting.is_native is True %}
+        <span class="text-eco-green font-semibold">Yes</span> {% elif sighting.is_native is False %}
+        <span class="text-red-600 font-semibold">No</span> {% else %}
+        <span class="text-gray-500">Unknown</span> {% endif %}
+    </p>
+
+    {# Placeholder for future actions like edit/delete for sighting owner or comments #}
+    <div class="mt-8 border-t pt-6">
+
+        <a href="{% url 'main_app:sighting_edit' sighting.id %}" class="ml-4 bg-eco-accent-yellow text-eco-dark-text py-2 px-4 rounded-md text-sm font-semibold hover:opacity-80 transition-opacity">Edit Sighting</a>
+        <a href="{% url 'main_app:sighting_delete' sighting.id %}" class="ml-2 bg-red-500 text-white py-2 px-4 rounded-md text-sm font-semibold hover:bg-red-600 transition-colors">Delete Sighting</a> {% endif %}
+    </div>
+
+</div>
+{% endblock %}

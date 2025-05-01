@@ -1,15 +1,147 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'main_app/base.html' %} {% block title %}ecoSnap - Discover & Share Nature{% endblock %} {% block content %}
+<div class="space-y-12 py-10">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ecoSnap Home</title>
-</head>
+    <!-- Hero Section -->
+    <section class="text-center px-4">
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-eco-dark-text mb-6 leading-tight">
+            Create a Thriving Environment <br class="hidden sm:inline">
+            <span class="text-eco-green">with Green Companions.</span>
+        </h1>
+        <p class="text-lg sm:text-xl text-eco-secondary-text max-w-2xl mx-auto mb-10">
+            Plants reduce stress and improve your mood, so they are ideal for use at home and in the workplace. Join ecoSnap to explore, share, and learn.
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
+            <a href="{% url 'main_app:signup' %}" class="bg-eco-green hover:bg-eco-green-dark text-white font-semibold py-3 px-8 rounded-full text-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105">
+                Get Started
+            </a>
+            <a href="#learn-more" class="bg-white text-eco-green hover:bg-gray-50 border border-eco-green font-semibold py-3 px-8 rounded-full text-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105">
+                Learn More
+            </a>
+        </div>
+    </section>
 
-<body>
-    <h1>Welcome to ecoSnap!</h1>
-    <p>This is a basic homepage for the main_app.</p>
-</body>
+    <section class="px-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+            <div class="md:col-span-2 bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col">
+                <img src="https://images.pexels.com/photos/3230160/pexels-photo-3230160.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Close-up of a young green seedling sprouting from dark soil" class="w-full h-80 object-cover">
+                <div class="p-6 flex-grow flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-eco-dark-text mb-2">Track Your Plant Sightings</h3>
+                        <p class="text-eco-secondary-text text-sm mb-4">
+                            Easily document the plants, trees, and grasses you discover. Add photos, locations, and notes to build your personal nature log.
+                        </p>
+                    </div>
+                    <a href="{% if user.is_authenticated %}{% url 'main_app:map_view' %}{% else %}{% url 'main_app:signup' %}{% endif %}" class="mt-auto inline-block bg-eco-green text-white py-2 px-5 rounded-full font-semibold hover:bg-eco-green-dark transition-colors duration-300 text-xs self-start">
+                        Explore the Map
+                    </a>
+                </div>
+            </div>
 
-</html>
+            <!-- Wrapper for Stacked Side Cards -->
+            <div class="md:col-span-1 flex flex-col space-y-6">
+                <!-- Card 2: Statistic/Benefit -->
+                <div class="bg-eco-dark-text text-white p-6 rounded-xl border border-gray-700 flex flex-col justify-center flex-grow min-h-[180px]">
+                    <div class="text-eco-green font-extrabold text-5xl mb-1">1000s+</div>
+                    <h4 class="text-lg font-bold mb-2">Community Driven</h4>
+                    <p class="text-xs opacity-90">
+                        Join thousands of nature enthusiasts sharing their discoveries and contributing to ecological awareness.
+                    </p>
+                </div>
+
+                <!-- Card 3: Fun Fact -->
+                <div class="bg-eco-green-light p-6 rounded-xl border border-eco-green flex flex-col justify-center flex-grow min-h-[180px]">
+                    <div class="text-eco-green-dark font-extrabold text-5xl mb-1">48<span class="text-3xl">lbs</span></div>
+                    <h4 class="text-lg font-bold text-eco-green-dark mb-2">CO₂ Absorption</h4>
+                    <p class="text-eco-dark-text text-xs">
+                        A mature tree can absorb about 48 pounds of CO2 per year and releases enough oxygen to support 2-10 people.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="learn-more" class="px-4 py-12">
+        <h2 class="text-3xl font-bold text-eco-dark-text text-center mb-10">More Green Insights & Features</h2>
+
+
+
+        <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 items-stretch">
+
+            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col">
+                <img src="https://images.pexels.com/photos/225228/pexels-photo-225228.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&dpr=1" alt="Bee on a flower" class="w-full h-40 object-cover">
+                <div class="p-5 flex-grow flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-md font-bold mb-1 text-eco-green-dark">Pollinator Power</h3>
+                        <p class="text-eco-secondary-text text-xs">Many plants rely on pollinators. Spotting them is key to understanding ecosystem health.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 lg:col-span-2 bg-eco-dark-text text-white p-8 rounded-lg flex flex-col items-center justify-center text-center min-h-[240px]">
+                <svg class="w-16 h-16 mb-4 text-eco-accent-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.5 8.5a.5.5 0 11-1 0 .5.5 0 011 0zM15.5 8.5a.5.5 0 11-1 0 .5.5 0 011 0zM12 15.5a.5.5 0 110-1 .5.5 0 010 1z"></path></svg>
+                <h3 class="text-xl font-bold mb-2">AI Species Identification</h3>
+                <p class="text-sm opacity-90 max-w-md">
+                    Coming soon: Snap a photo and let our advanced AI help you identify plant species with amazing accuracy. Learning about nature has never been easier!
+                </p>
+            </div>
+
+            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col">
+                <img src="https://images.pexels.com/photos/167699/pexels-photo-167699.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&dpr=1" alt="Misty forest path" class="w-full h-40 object-cover">
+                <div class="p-5 flex-grow flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-md font-bold mb-1 text-eco-green-dark">Forest Bathing</h3>
+                        <p class="text-eco-secondary-text text-xs">"Shinrin-yoku" or forest bathing is proven to reduce stress. Get out and explore!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-eco-green-light rounded-lg border border-eco-green overflow-hidden flex flex-col">
+                <img src="https://images.pexels.com/photos/305821/pexels-photo-305821.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&dpr=1" alt="Dew drops on a leaf" class="w-full h-40 object-cover">
+                <div class="p-5 flex-grow flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-md font-bold mb-1 text-eco-green-dark">Micro-Ecosystems</h3>
+                        <p class="text-eco-dark-text text-xs">Even small patches of green in urban areas can host a surprising diversity of life. Notice the small wonders!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg flex flex-col items-center justify-center text-center min-h-[200px]">
+                <svg class="w-12 h-12 mb-3 text-eco-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <h3 class="text-md font-bold mb-1 text-eco-dark-text">Share Your Finds</h3>
+                <p class="text-eco-secondary-text text-xs">Your sightings contribute to a larger map of biodiversity. Help us grow the ecoSnap database!</p>
+            </div>
+
+            <div class="bg-eco-accent-yellow text-eco-dark-text rounded-lg border border-yellow-500 p-6 flex flex-col items-center justify-center text-center min-h-[200px]">
+                <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                <h3 class="text-md font-bold mb-1">Seasonal Changes</h3>
+                <p class="text-xs opacity-90">Track how plants and landscapes change through the seasons. A new discovery awaits every day!</p>
+            </div>
+
+            <div class="bg-eco-green-dark text-white rounded-lg border border-green-900 overflow-hidden flex flex-col">
+                <div class="text-center pt-5">
+                    <span class="text-eco-green-light font-extrabold text-5xl">100s</span>
+                    <span class="text-eco-green-light font-bold text-3xl">ft</span>
+                </div>
+                <img src="https://images.pexels.com/photos/1108601/pexels-photo-1108601.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&dpr=1" alt="Looking up at tall trees" class="w-full h-32 object-cover opacity-80 mt-2">
+                <div class="p-5 pt-2 flex-grow flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-md font-bold mb-1 text-center">The Tallest Giants</h3>
+                        <p class="text-xs opacity-90 text-center">Did you know some trees can live for thousands of years and grow hundreds of feet tall? Discover the giants in your area!</p>
+                    </div>
+                </div>
+            </div>
+
+
+
+        </div>
+    </section>
+
+    <section class="text-center px-4 py-8">
+        <p class="text-xl text-eco-secondary-text max-w-3xl mx-auto">
+            From the smallest sprout in your window box to the ancient trees in our forests, every plant plays a role. <br class="hidden sm:inline">
+            <span class="text-eco-green font-semibold">EcoSnap helps you become part of their story.</span>
+        </p>
+    </section>
+
+</div>
+{% endblock %}

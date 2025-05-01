@@ -1,0 +1,509 @@
+{% extends 'main_app/base.html' %} {% block title %} {% if edit_mode %} Edit Sighting - ecoSnap {% else %} Post New Sighting - ecoSnap {% endif %} {% endblock %} {% block extra_head %}
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js'></script>
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css' rel='stylesheet' />
+<!-- Make sure to include Supabase JS library, e.g., from CDN in base.html or here -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+    #map-picker {
+        height: 400px;
+        width: 100%;
+        border-radius: 0.5rem;
+    }
+    
+    .user-location-marker .mapboxgl-marker-pin {
+        background-color: #1E90FF;
+    }
+    
+    #image-previews-container img {
+        max-height: 100px;
+        margin-right: 10px;
+        margin-bottom: 10px;
+        border-radius: 0.375rem;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .image-preview-item {
+        position: relative;
+        display: inline-block;
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .image-preview-item img {
+        max-height: 100px;
+        border-radius: 0.375rem;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .image-remove-btn {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background-color: #ef4444;
+        color: white;
+        border-radius: 50%;
+        width: 22px;
+        height: 22px;
+        font-size: 14px;
+        line-height: 22px;
+        text-align: center;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    
+    .image-remove-btn:hover {
+        background-color: #dc2626;
+    }
+    
+    .ai-analysis-results {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        background-color: #f3f9f4;
+        border: 1px solid #d1e7dd;
+    }
+    
+    .ai-analysis-results.loading {
+        background-color: #f8f9fa;
+        border-color: #e9ecef;
+    }
+    
+    .ai-loading-spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        border-left-color: #388E3C;
+        border-radius: 50%;
+        animation: spinner 1s linear infinite;
+    }
+    
+    @keyframes spinner {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+{% endblock %} {% block content %}
+<div class="max-w-2xl mx-auto bg-white shadow-lg rounded-xl p-6 md:p-8">
+    {% if edit_mode %}
+    <h1 class="text-2xl md:text-3xl font-bold text-eco-green mb-6 text-center">Edit Sighting</h1>
+    {% else %}
+    <h1 class="text-2xl md:text-3xl font-bold text-eco-green mb-6 text-center">Post a New Sighting</h1>
+    {% endif %}
+
+    <form method="POST" class="space-y-6" id="sighting-form">
+        {% csrf_token %}
+
+        <div>
+            <label for="{{ form.species_name.id_for_label }}" class="block text-sm font-medium text-eco-dark-text">{{ form.species_name.label }}</label> {{ form.species_name }} {% if form.species_name.help_text %}
+            <p class="mt-1 text-xs text-eco-secondary-text">{{ form.species_name.help_text }}</p>{% endif %} {% for error in form.species_name.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+        </div>
+
+        <div>
+            <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-eco-dark-text">{{ form.description.label }}</label> {{ form.description }} {% if form.description.help_text %}
+            <p class="mt-1 text-xs text-eco-secondary-text">{{ form.description.help_text }}</p>{% endif %} {% for error in form.description.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+        </div>
+
+        <div class="bg-eco-light-gray p-4 rounded-lg border border-gray-200">
+            <h3 class="text-lg font-semibold text-eco-dark-text mb-2">Select Location</h3>
+            <p class="text-xs text-eco-secondary-text mb-3">Click on the map to set the sighting's coordinates. Your current location is marked in blue (if available). You can drag the green marker to adjust the sighting position.</p>
+            <div id='map-picker'></div>
+            <div class="mt-3 flex space-x-4">
+                <div class="flex-1">
+                    <label for="{{ form.latitude.id_for_label }}" class="block text-xs font-medium text-eco-dark-text">Latitude</label>
+                    <input type="text" name="{{ form.latitude.html_name }}" id="{{ form.latitude.id_for_label }}" value="{{ form.latitude.value|default:'' }}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-eco-green focus:border-eco-green sm:text-sm">
+                </div>
+                <div class="flex-1">
+                    <label for="{{ form.longitude.id_for_label }}" class="block text-xs font-medium text-eco-dark-text">Longitude</label>
+                    <input type="text" name="{{ form.longitude.html_name }}" id="{{ form.longitude.id_for_label }}" value="{{ form.longitude.value|default:'' }}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-eco-green focus:border-eco-green sm:text-sm">
+                </div>
+            </div>
+            {% for error in form.latitude.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %} {% for error in form.longitude.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+        </div>
+
+        <div>
+            <label for="image-upload-input" class="block text-sm font-medium text-eco-dark-text">Upload Images (Optional)</label>
+            <input type="file" id="image-upload-input" multiple accept="image/*" class="mt-1 block w-full text-sm text-eco-secondary-text file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-eco-green-light file:text-eco-green-dark hover:file:bg-eco-green">
+            <p class="mt-1 text-xs text-eco-secondary-text">Images will be uploaded to Supabase. Max 5MB per image. Only image files are accepted.</p>
+            <div id="image-previews-container" class="mt-2 flex flex-wrap"></div>
+            <div id="upload-status" class="mt-1 text-xs"></div>
+            <div id="ai-analysis-container" class="hidden ai-analysis-results">
+                <h4 class="font-medium text-eco-dark-text mb-2">AI Plant Analysis</h4>
+                <div id="ai-analysis-content"></div>
+                <div class="mt-2">
+                    <button type="button" id="ai-apply-button" class="text-sm bg-eco-green text-white py-1 px-3 rounded-md hover:bg-eco-green-dark">
+                        Apply to Form
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <label for="{{ form.is_native.id_for_label }}" class="block text-sm font-medium text-eco-dark-text">{{ form.is_native.label }}</label> {{ form.is_native }} {% if form.is_native.help_text %}
+            <p class="mt-1 text-xs text-eco-secondary-text">{{ form.is_native.help_text }}</p>{% endif %} {% for error in form.is_native.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+        </div>
+
+        <!-- Hidden field to store image URLs from Supabase uploads -->
+        <input type="hidden" name="{{ form.image_urls.html_name }}" id="{{ form.image_urls.id_for_label }}" value="{{ form.image_urls.value|default:'' }}">
+
+        <!-- Hidden field to store AI analysis data -->
+        <input type="hidden" name="ai_analysis_data" id="ai-analysis-data">
+
+        <div class="pt-4">
+            <button type="submit" class="w-full bg-eco-green hover:bg-eco-green-dark text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-eco-green-dark focus:ring-opacity-50 transition-colors duration-300">
+                {% if edit_mode %}Update Sighting{% else %}Submit Sighting{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %} {% block extra_scripts %}
+<script>
+    const SUPABASE_URL = 'https://dckpakevfcnpkltnoazt.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRja3Bha2V2ZmNucGtsdG5vYXp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1ODE4MTQsImV4cCI6MjA2MjE1NzgxNH0.cQzuMYxQtL8znJj_fmPDXFKgXqZelVDDwu_hWbwLDs0';
+    let supabaseClient;
+
+    try {
+        if (window.supabase) {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log("Supabase client initialized with window.supabase");
+        } else if (window.createClient) {
+            supabaseClient = window.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log("Supabase client initialized with window.createClient");
+        } else {
+            console.log("Using imported Supabase from CDN.");
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+    } catch (error) {
+        console.error("Error initializing Supabase:", error);
+        supabaseClient = null;
+    }
+
+    const imageUploadInput = document.getElementById('image-upload-input');
+    const imageUrlsTextarea = document.getElementById('{{ form.image_urls.id_for_label }}');
+    const imagePreviewsContainer = document.getElementById('image-previews-container');
+    const uploadStatusDiv = document.getElementById('upload-status');
+    const aiAnalysisContainer = document.getElementById('ai-analysis-container');
+    const aiAnalysisContent = document.getElementById('ai-analysis-content');
+    const aiAnalysisData = document.getElementById('ai-analysis-data');
+    const aiApplyButton = document.getElementById('ai-apply-button');
+    const speciesNameField = document.getElementById('{{ form.species_name.id_for_label }}');
+    const descriptionField = document.getElementById('{{ form.description.id_for_label }}');
+    const isNativeField = document.getElementById('{{ form.is_native.id_for_label }}');
+
+    function displayExistingImages() {
+        if (!imageUrlsTextarea.value) return;
+
+        const urls = imageUrlsTextarea.value.split('\n').filter(url => url.trim() !== '');
+        if (!urls.length) return;
+
+        urls.forEach((url, index) => {
+            addImagePreviewWithRemoveButton(url, "Existing image", index);
+        });
+    }
+
+    function addImagePreviewWithRemoveButton(imageUrl, altText, index) {
+        const container = document.createElement('div');
+        container.className = 'image-preview-item';
+        container.dataset.url = imageUrl;
+        container.dataset.index = index;
+
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.alt = altText;
+        container.appendChild(img);
+
+        const removeBtn = document.createElement('div');
+        removeBtn.className = 'image-remove-btn';
+        removeBtn.innerHTML = '×';
+        removeBtn.title = 'Remove image';
+        removeBtn.addEventListener('click', function() {
+            removeImage(container);
+        });
+        container.appendChild(removeBtn);
+
+        imagePreviewsContainer.appendChild(container);
+    }
+
+    function removeImage(container) {
+        const urlToRemove = container.dataset.url;
+        const urls = imageUrlsTextarea.value.split('\n').filter(url => url.trim() !== '');
+        const updatedUrls = urls.filter(url => url !== urlToRemove);
+        imageUrlsTextarea.value = updatedUrls.join('\n');
+        container.remove();
+        uploadStatusDiv.innerHTML += `<br>Removed image: ${urlToRemove.split('/').pop()}`;
+    }
+
+    displayExistingImages();
+
+    function isImageFile(file) {
+        return file.type.startsWith('image/');
+    }
+
+    async function analyzeImage(imageUrl) {
+        aiAnalysisContainer.classList.remove('hidden');
+        aiAnalysisContainer.classList.add('loading');
+        aiAnalysisContent.innerHTML = '<div class="ai-loading-spinner"></div> Analyzing image with AI...';
+
+        try {
+            const response = await fetch('/api/analyze-image/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                },
+                body: JSON.stringify({
+                    image_url: imageUrl
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to analyze image');
+            }
+
+            const analysisData = await response.json();
+
+            aiAnalysisContainer.classList.remove('loading');
+
+            let analysisHtml = `
+                <p><strong>Species:</strong> ${analysisData.species_name}</p>
+                <p><strong>Native:</strong> ${analysisData.is_native ? 'Yes' : 'No'}</p>
+                <p><strong>About:</strong> ${analysisData.description}</p>
+            `;
+
+            if (analysisData.fun_facts) {
+                analysisHtml += `<p><strong>Fun Facts:</strong> ${analysisData.fun_facts}</p>`;
+            }
+
+            aiAnalysisContent.innerHTML = analysisHtml;
+
+
+            aiAnalysisData.value = JSON.stringify(analysisData);
+
+            return analysisData;
+        } catch (error) {
+            console.error('AI analysis error:', error);
+            aiAnalysisContainer.classList.remove('loading');
+            aiAnalysisContent.innerHTML = `<p class="text-red-600">Failed to analyze image: ${error.message}</p>`;
+            return null;
+        }
+    }
+
+    if (aiApplyButton) {
+        aiApplyButton.addEventListener('click', () => {
+            try {
+                const analysisData = JSON.parse(aiAnalysisData.value);
+                if (analysisData) {
+                    speciesNameField.value = analysisData.species_name || '';
+                    descriptionField.value = analysisData.description || '';
+                    if (typeof analysisData.is_native === 'boolean') {
+                        isNativeField.checked = analysisData.is_native;
+                    }
+                }
+            } catch (error) {
+                console.error('Error applying AI data to form:', error);
+            }
+        });
+    }
+
+    if (imageUploadInput) {
+        imageUploadInput.addEventListener('change', async(event) => {
+            if (!supabaseClient) {
+                uploadStatusDiv.textContent = 'Supabase not initialized. Cannot upload images.';
+                uploadStatusDiv.className = 'mt-1 text-xs text-red-600';
+                return;
+            }
+
+            const files = event.target.files;
+            if (!files.length) return;
+
+            aiAnalysisContainer.classList.add('hidden');
+            aiAnalysisData.value = '';
+
+            uploadStatusDiv.textContent = 'Validating and uploading images...';
+            uploadStatusDiv.className = 'mt-1 text-xs text-eco-secondary-text';
+
+            let uploadedUrls = imageUrlsTextarea.value ?
+                imageUrlsTextarea.value.split('\n').filter(url => url.trim() !== '') : [];
+
+            let lastUploadedImageUrl = null;
+
+            for (const file of files) {
+                if (!isImageFile(file)) {
+                    uploadStatusDiv.innerHTML += `<br>File ${file.name} is not a valid image file and was skipped.`;
+                    continue;
+                }
+
+                if (file.size > 5 * 1024 * 1024) {
+                    uploadStatusDiv.innerHTML += `<br>File ${file.name} is too large (max 5MB).`;
+                    continue;
+                }
+
+                const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+
+
+                const {
+                    data,
+                    error
+                } = await supabaseClient.storage.from('sighting-images').upload(fileName, file);
+
+                if (error) {
+                    uploadStatusDiv.innerHTML += `<br>Error uploading ${file.name}: ${error.message}`;
+                } else {
+                    const {
+                        data: urlData
+                    } = supabaseClient.storage.from('sighting-images').getPublicUrl(fileName);
+                    const publicURL = urlData.publicUrl;
+
+                    uploadedUrls.push(publicURL);
+                    imageUrlsTextarea.value = uploadedUrls.join('\n');
+
+
+                    addImagePreviewWithRemoveButton(publicURL, file.name, uploadedUrls.length - 1);
+
+                    uploadStatusDiv.innerHTML += `<br>Uploaded ${file.name} successfully.`;
+
+                    lastUploadedImageUrl = publicURL;
+                }
+            }
+
+            uploadStatusDiv.innerHTML += '<br>Upload process finished.';
+            if (lastUploadedImageUrl) {
+                analyzeImage(lastUploadedImageUrl);
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const formElements = document.querySelectorAll('#sighting-form input[type="text"], #sighting-form input[type="number"], #sighting-form input[type="email"], #sighting-form textarea, #sighting-form select');
+        formElements.forEach(el => {
+            if (el.id !== '{{ form.image_urls.id_for_label }}' && el.id !== 'ai-analysis-data') {
+                el.classList.add('mt-1', 'block', 'w-full', 'px-3', 'py-2', 'border', 'border-gray-300', 'rounded-md', 'shadow-sm', 'focus:outline-none', 'focus:ring-eco-green', 'focus:border-eco-green', 'sm:text-sm');
+            }
+        });
+        const imageUrlsTextareaField = document.getElementById('{{ form.image_urls.id_for_label }}');
+        if (imageUrlsTextareaField) {
+            imageUrlsTextareaField.classList.add('mt-1', 'block', 'w-full', 'px-3', 'py-2', 'border', 'border-gray-300', 'rounded-md',
+                'shadow-sm', 'focus:outline-none', 'focus:ring-eco-green', 'focus:border-eco-green', 'sm:text-sm', 'text-xs', 'text-gray-500');
+        }
+
+        initializeMap();
+    });
+
+    function initializeMap() {
+        const mapboxAccessTokenForm = 'pk.eyJ1IjoibWlndWVsY29yaWE5NCIsImEiOiJjbWFkY2V6ZmYwY3l6MmxwcDh4anExMmdyIn0.hEMag3lCKS-843Ll_R6jzw';
+        const latField = document.getElementById('{{ form.latitude.id_for_label }}');
+        const lngField = document.getElementById('{{ form.longitude.id_for_label }}');
+        let sightingMarker = null;
+        const mapContainer = document.getElementById('map-picker');
+
+        if (!mapContainer) {
+            console.error("Map container element not found!");
+            return;
+        }
+
+        if (!mapboxAccessTokenForm || mapboxAccessTokenForm === 'YOUR_MAPBOX_ACCESS_TOKEN') {
+            console.warn("Mapbox Access Token is not set for form.");
+            mapContainer.innerHTML = '<div class="p-5 text-center text-red-600 bg-red-50 rounded-lg">' +
+                'Map for location picking cannot be loaded. Please configure Mapbox Access Token.</div>';
+            return;
+        }
+
+        if (!mapboxgl) {
+            console.error("Mapbox GL JS not loaded!");
+            mapContainer.innerHTML = '<div class="p-5 text-center text-red-600 bg-red-50 rounded-lg">' +
+                'Mapbox GL JS failed to load. Please check your internet connection.</div>';
+            return;
+        }
+
+        try {
+            mapboxgl.accessToken = mapboxAccessTokenForm;
+
+            const mapForm = new mapboxgl.Map({
+                container: 'map-picker',
+                style: 'mapbox://styles/mapbox/outdoors-v11',
+                center: [-96, 37.8],
+                zoom: 3
+            });
+
+            mapForm.addControl(new mapboxgl.NavigationControl());
+
+            mapForm.on('load', () => {
+                console.log("Map loaded successfully");
+            });
+
+            mapForm.on('error', (e) => {
+                console.error("Map error:", e.error);
+                mapContainer.innerHTML = '<div class="p-5 text-center text-red-600 bg-red-50 rounded-lg">' +
+                    'Error loading map: ' + e.error.message + '</div>';
+            });
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const userLng = position.coords.longitude;
+                    const userLat = position.coords.latitude;
+                    mapForm.setCenter([userLng, userLat]);
+                    mapForm.setZoom(13);
+                    new mapboxgl.Marker({
+                            color: '#1E90FF'
+                        })
+                        .setLngLat([userLng, userLat])
+                        .setPopup(new mapboxgl.Popup().setHTML("Your current location"))
+                        .addTo(mapForm);
+                }, () => {
+                    console.warn('Geolocation failed or was denied.');
+                });
+            }
+
+            mapForm.on('click', (e) => {
+                const coords = e.lngLat;
+                latField.value = coords.lat.toFixed(6);
+                lngField.value = coords.lng.toFixed(6);
+                if (sightingMarker) {
+                    sightingMarker.setLngLat(coords);
+                } else {
+                    sightingMarker = new mapboxgl.Marker({
+                            draggable: true,
+                            color: '#388E3C'
+                        })
+                        .setLngLat(coords).addTo(mapForm);
+                    sightingMarker.on('dragend', () => {
+                        const lngLat = sightingMarker.getLngLat();
+                        latField.value = lngLat.lat.toFixed(6);
+                        lngField.value = lngLat.lng.toFixed(6);
+                    });
+                }
+            });
+
+            if (latField.value && lngField.value) {
+                const initialCoords = [parseFloat(lngField.value), parseFloat(latField.value)];
+                if (!sightingMarker) {
+                    sightingMarker = new mapboxgl.Marker({
+                            draggable: true,
+                            color: '#388E3C'
+                        })
+                        .setLngLat(initialCoords).addTo(mapForm);
+                    sightingMarker.on('dragend', () => {
+                        const lngLat = sightingMarker.getLngLat();
+                        latField.value = lngLat.lat.toFixed(6);
+                        lngField.value = lngLat.lng.toFixed(6);
+                    });
+                }
+                if (mapForm.getZoom() < 5) {
+                    mapForm.setCenter(initialCoords);
+                    mapForm.setZoom(10);
+                }
+            }
+        } catch (error) {
+            console.error("Error initializing map:", error);
+            mapContainer.innerHTML = '<div class="p-5 text-center text-red-600 bg-red-50 rounded-lg">' +
+                'Error initializing map: ' + error.message + '</div>';
+        }
+    }
+</script>
+{% endblock %}
