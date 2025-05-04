@@ -111,4 +111,8 @@ STATIC_URL = 'static/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField' 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Login and Logout redirect URLs
+LOGIN_REDIRECT_URL = 'main_app:index' # The index view will redirect to map_view if logged in
+LOGOUT_REDIRECT_URL = 'main_app:index' # Redirect to landing page after logout 
