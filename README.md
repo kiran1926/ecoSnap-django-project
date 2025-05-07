@@ -12,7 +12,7 @@ In today's world, understanding and preserving our local ecosystems is more impo
 
 ## Getting Started
 
-- [Live Demo](https://your-deployed-app-url.com)
+- [Live Demo](https://ecosnap-1679702835f6.herokuapp.com/)
 - [Project Planning](https://github.com/kiran1926/ecoSnap-django-project)
 
 ## Features
@@ -27,6 +27,36 @@ The application includes the following key features:
 - **[Sighting Update](./documentation/sighting_update.md)**: Enables users to edit their existing sightings.
 - **[Sighting Deletion](./documentation/sighting_deletion.md)**: Allows users to delete their own sightings after confirmation.
 - **[Image Analysis API](./documentation/image_analysis_api.md)**: An API endpoint that uses OpenAI's Vision API to analyze plant images and return information like species name, description, and native status.
+
+## Model Schema
+
+### Sighting Model
+```python
+class Sighting(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    species_name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    image_urls = models.TextField(blank=True)
+    is_native = models.BooleanField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+```
+
+### Field Descriptions
+- `user`: Foreign key to Django's built-in User model
+- `species_name`: Name of the observed species (max 200 characters)
+- `description`: Optional detailed description of the sighting
+- `latitude`: Geographic latitude coordinate
+- `longitude`: Geographic longitude coordinate
+- `image_urls`: Text field storing image URLs (one per line)
+- `is_native`: Boolean indicating if the species is native to the location
+- `created_at`: Timestamp of when the sighting was created
+- `updated_at`: Timestamp of when the sighting was last updated
 
 ## Technologies Used
 
