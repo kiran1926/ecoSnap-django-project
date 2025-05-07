@@ -1,6 +1,6 @@
 # ecoSnap
 
-![ecoSnap Logo](https://images.pexels.com/photos/3228762/pexels-photo-3228762.jpeg?auto=compress&cs=tinysrgb&w=600)
+![ecoSnap Screenshot](./main_app/static/images/Screenshot%202025-05-07%20at%202.43.53%E2%80%AFAM.png)
 
 ## Overview
 
@@ -12,14 +12,15 @@ In today's world, understanding and preserving our local ecosystems is more impo
 
 ## Getting Started
 
-- [Live Demo](https://ecosnap-1679702835f6.herokuapp.com/)
-- [Project Planning](https://github.com/kiran1926/ecoSnap-django-project)
+- [Live Site: ecoSnap](https://ecosnap-1679702835f6.herokuapp.com/)
+
 
 ## Features
 
 The application includes the following key features:
 
-- **[Index Page](./documentation/index_page.md)**: Landing page that directs authenticated users to the map and new users to sign up/login.
+- **[Index Page](./main_app/static/images/Screenshot%202025-05-07%20at%202.44.48%E2%80%AFAM.png)**
+**: Landing page that directs authenticated users to the map and new users to sign up/login.
 - **[User Signup](./documentation/user_signup.md)**: Allows new users to register for an account.
 - **[Sighting Map View](./documentation/sighting_map_view.md)**: Displays all sightings on an interactive map for authenticated users.
 - **[Sighting Detail View](./documentation/sighting_detail_view.md)**: Shows detailed information for a single sighting.
