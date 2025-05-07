@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 # You should generate a new secret key for your project.
 # For development, this is a placeholder.
-SECRET_KEY = 'django-insecure-temporary-secret-key-for-development'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
